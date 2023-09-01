@@ -282,3 +282,111 @@ write.csv(counts, file = 'C:/Users/AlexanderAntonioHida/Downloads/Capstone/Cycli
 
 #You're done! Congratulations!
 
+#Let's now do additional data exploration here for the Sharing part of the analysis 
+
+#get the hour of the day
+all_trips_v2$hour_of_day <- hour(all_trips_v2$started_at)
+
+#Now get a heatmap of hour of the day vs day of the week 
+# Create a summary table for counting ride_ids
+heatmap_data <- all_trips_v2 %>%
+  group_by(hour_of_day, day_of_week) %>%
+  summarise(ride_count = n())
+
+# Create the heatmap using ggplot2 with y-axis in increments of 1 unit
+ggplot(heatmap_data, aes(x = day_of_week, y = hour_of_day, fill = ride_count)) +
+  geom_tile() +
+  scale_fill_gradient(low = "white", high = "blue") +
+  labs(
+    x = "Day of the Week",
+    y = "Hour of the Day",
+    fill = "Ride Count",
+    title = "Heatmap of Ride Count by Hour and Day"
+  ) +
+  scale_y_continuous(breaks = seq(min(heatmap_data$hour_of_day), max(heatmap_data$hour_of_day), by = 1)) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    axis.text.y = element_text(size = 8),
+    axis.ticks.y = element_blank(),
+    plot.title = element_text(hjust = 0.5)
+  )
+
+
+
+### Now let's review the distribution per type of ride 
+
+# Assuming all_trips_v2$rideable_type is a categorical variable
+rideable_type_counts <- all_trips_v2 %>%
+  group_by(rideable_type) %>%
+  summarise(ride_count = n())
+
+# Create a vector of distinct colors (you can add more colors as needed)
+distinct_colors <- c("dodgerblue", "orange", "purple", "red", "yellow", "pink")
+
+# Create the bar graph using ggplot2 with distinct colors for each bar
+ggplot(rideable_type_counts, aes(x = reorder(rideable_type, -ride_count), y = ride_count, fill = rideable_type)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = distinct_colors) +  # Assign distinct colors to bars
+  labs(
+    x = "Rideable Type",
+    y = "Ride Count",
+    title = "Total Ride Count by Rideable Type"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5)
+  )
+
+
+## Dig into the monthly distribution of rides 
+
+# install.packages("scales")
+library(scales)
+library(dplyr)
+library(ggplot2)
+library(RColorBrewer)
+# Assuming all_trips_v2$started_at is in timestamp format
+all_trips_v2$month <- format(all_trips_v2$started_at, "%B")  # Extract month name
+
+# Define a custom color palette with a gradient from blue to purple
+n_colors <- nlevels(factor(month_volume$month))
+color_palette <- colorRampPalette(c("blue", "purple"))(n_colors)
+
+# Define the custom order of months
+custom_month_order <- c(
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+)
+
+# Convert month to a factor with custom levels
+all_trips_v2$month <- factor(all_trips_v2$month, levels = custom_month_order)
+
+
+# Create a summary table for counting ride_ids per month
+month_volume <- all_trips_v2 %>%
+  group_by(month) %>%
+  summarise(total_count = n())
+
+# Create a summary table for counting ride_ids per month
+month_volume <- all_trips_v2 %>%
+  group_by(month) %>%
+  summarise(total_count = n())
+
+
+# Create the volume chart using ggplot2 with custom-colored gradients and sorted months
+ggplot(month_volume, aes(x = month, y = total_count, fill = month)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = scales::hue_pal()(length(custom_month_order))) +
+  labs(
+    x = "Month",
+    y = "Ride Count",
+    title = "Total Volume of Rides per Month",
+    fill = "Month"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5)
+  )
